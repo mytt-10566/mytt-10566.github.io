@@ -25,13 +25,6 @@
             font-size: 1.5rem;
         }
 
-        .update-time {
-            text-align: center;
-            color: #999;
-            font-size: 0.85rem;
-            margin-bottom: 15px;
-        }
-
         .container {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
@@ -142,7 +135,6 @@
 </head>
 <body>
 <h2>基金购买计算器</h2>
-<p class="update-time" id="updateTime">更新时间: --</p>
 
 <div class="container">
     <table id="calcTable">
@@ -157,11 +149,10 @@
             <th>预估单位净值</th>
             <th>预估涨幅</th>
             <th>推荐购买金额</th>
-            <th>净值更新时间</th>
         </tr>
         </thead>
         <tbody>
-        <tr data-fund-code="011611">
+        <tr>
             <td>1</td>
             <td>华泰柏瑞科创50ETF联结C</td>
             <td><input type="number" class="buy-base-money" value="20" step="5"></td>
@@ -171,9 +162,8 @@
             <td><input type="number" class="fc-unit-net-worth" value="1.1332" step="0.0001"></td>
             <td class="change-rate">0.00%</td>
             <td class="buy-rcmd">0.00</td>
-            <td class="fund-update-time">--</td>
         </tr>
-        <tr data-fund-code="007301">
+        <tr>
             <td>2</td>
             <td>国联证半导体C</td>
             <td><input type="number" class="buy-base-money" value="20" step="5"></td>
@@ -183,9 +173,8 @@
             <td><input type="number" class="fc-unit-net-worth" value="3.1334" step="0.0001"></td>
             <td class="change-rate">0.00%</td>
             <td class="buy-rcmd">0.00</td>
-            <td class="fund-update-time">--</td>
         </tr>
-        <tr data-fund-code="012734">
+        <tr>
             <td>3</td>
             <td>天弘中证人工智能主题C</td>
             <td><input type="number" class="buy-base-money" value="20" step="5"></td>
@@ -195,9 +184,8 @@
             <td><input type="number" class="fc-unit-net-worth" value="1.8396" step="0.0001"></td>
             <td class="change-rate">0.00%</td>
             <td class="buy-rcmd">0.00</td>
-            <td class="fund-update-time">--</td>
         </tr>
-        <tr data-fund-code="022500">
+        <tr>
             <td>4</td>
             <td>国泰中证全指通信设备ETF联接E</td>
             <td><input type="number" class="buy-base-money" value="20" step="5"></td>
@@ -207,9 +195,8 @@
             <td><input type="number" class="fc-unit-net-worth" value="3.0365" step="0.0001"></td>
             <td class="change-rate">0.00%</td>
             <td class="buy-rcmd">0.00</td>
-            <td class="fund-update-time">--</td>
         </tr>
-        <tr data-fund-code="012863">
+        <tr>
             <td>5</td>
             <td>汇添富中证电池主题ETF联接C</td>
             <td><input type="number" class="buy-base-money" value="20" step="5"></td>
@@ -219,9 +206,8 @@
             <td><input type="number" class="fc-unit-net-worth" value="0.7964" step="0.0001"></td>
             <td class="change-rate">0.00%</td>
             <td class="buy-rcmd">0.00</td>
-            <td class="fund-update-time">--</td>
         </tr>
-        <tr data-fund-code="014881">
+        <tr>
             <td>6</td>
             <td>天弘中证机器人ETF联接C</td>
             <td><input type="number" class="buy-base-money" value="20" step="5"></td>
@@ -231,7 +217,6 @@
             <td><input type="number" class="fc-unit-net-worth" value="1.2693" step="0.0001"></td>
             <td class="change-rate">0.00%</td>
             <td class="buy-rcmd">0.00</td>
-            <td class="fund-update-time">--</td>
         </tr>
         </tbody>
     </table>
@@ -285,68 +270,6 @@
             buyRcmdCell.className = 'buy-rcmd ' + (buyRcmd >= 0 ? 'positive' : 'negative');
         }
 
-        // 获取实时单位净值（使用JSONP绕过CORS）
-        function fetchFundNetWorth(fundCode) {
-            return new Promise((resolve) => {
-                const callbackName = `fundCallback_${fundCode}_${Date.now()}`;
-                
-                window.jsonpgz = function(data) {
-                    resolve(data);
-                    delete window.jsonpgz;
-                };
-                
-                const script = document.createElement('script');
-                script.src = `https://fundgz.1234567.com.cn/js/${fundCode}.js?rt=${Date.now()}`;
-                script.onerror = () => {
-                    console.error(`获取基金${fundCode}净值失败`);
-                    resolve(null);
-                    delete window.jsonpgz;
-                };
-                
-                document.head.appendChild(script);
-                setTimeout(() => document.head.removeChild(script), 5000);
-            });
-        }
-
-        // 更新单行数据
-        async function updateRowData(row) {
-            const fundCode = row.getAttribute('data-fund-code');
-            if (!fundCode) return;
-            
-            const data = await fetchFundNetWorth(fundCode);
-            if (!data || !data.gsz) return;
-            
-            // 更新预估单位净值（gsz是估算值）
-            const fcInput = row.querySelector('.fc-unit-net-worth');
-            const diffInput = row.querySelector('.diff-unit-net-worth');
-            const diffValue = parseFloat(diffInput.value) || 0;
-            
-            // 设置预估单位净值（减去差值，因为计算时会加回来）
-            fcInput.value = (parseFloat(data.gsz) - diffValue).toFixed(4);
-            
-            // 更新净值更新时间
-            const timeCell = row.querySelector('.fund-update-time');
-            if (data.gztime) {
-                // 去掉年份，格式从 "2026-02-13 15:00" 变为 "02-13 15:00"
-                timeCell.textContent = data.gztime.substring(5);
-            }
-            
-            // 重新计算
-            calculateRow(row);
-        }
-
-        // 更新所有基金数据
-        async function updateAllFunds() {
-            const rows = document.querySelectorAll('#calcTable tbody tr[data-fund-code]');
-            for (const row of rows) {
-                await updateRowData(row);
-            }
-            // 更新时间
-            const now = new Date();
-            document.getElementById('updateTime').textContent = 
-                `更新时间: ${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-        }
-
         // 初始化所有行
         const rows = document.querySelectorAll('#calcTable tbody tr');
         rows.forEach(row => {
@@ -362,12 +285,6 @@
                 });
             }
         });
-
-        // 立即执行一次更新
-        updateAllFunds();
-
-        // 每30秒更新一次
-        setInterval(updateAllFunds, 30000);
     });
 </script>
 </body>

@@ -137,6 +137,12 @@
                 width: 100px;
                 min-width: 100px;
             }
+
+            /* 增加对比单位净值和预估单位净值列宽度 */
+            th:nth-child(5), td:nth-child(5),
+            th:nth-child(7), td:nth-child(7) {
+                min-width: 80px;
+            }
         }
     </style>
 </head>
@@ -155,10 +161,10 @@
             <th>对比单位净值</th>
             <th>差值</th>
             <th>预估单位净值</th>
-            <th>预估涨幅</th>
+            <th>预估累计涨幅</th>
             <th>预估净值涨幅</th>
             <th>推荐购买金额</th>
-            <th>净值更新时间</th>
+            <th>更新时间</th>
         </tr>
         </thead>
         <tbody>
